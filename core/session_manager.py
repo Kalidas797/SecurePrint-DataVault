@@ -1,6 +1,6 @@
 import os
-import shutil
 import uuid
+from core.secure_delete import secure_delete_directory
 
 class SessionManager:
     def __init__(self, base_path="data/secure_sessions"):
@@ -17,8 +17,7 @@ class SessionManager:
 
     def end_session(self):
         try:
-            if os.path.exists(self.session_path):
-                shutil.rmtree(self.session_path)
+            secure_delete_directory(self.session_path)
             return True
         except OSError:
             return False
