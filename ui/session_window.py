@@ -1,11 +1,19 @@
 import sys
-from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QPushButton, QDesktopWidget
+import os
+from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QPushButton, QDesktopWidget, QFileDialog, QMessageBox
 from PyQt5.QtCore import Qt
+from core.encryption import encrypt_file, decrypt_file, generate_key
+from core.print_manager import print_pdf
+from core.temp_manager import create_temp_file, cleanup_temp_dir
+from core.secure_delete import secure_delete_file
 
 class SessionWindow(QMainWindow):
     def __init__(self, session_manager=None):
         super().__init__()
         self.session_manager = session_manager
+        # Generate a session-specific encryption key
+        self.key = generate_key()
+        
         self.setWindowTitle("SecurePrint – Active Session")
         self.resize(500, 300)
         self.center()
@@ -56,7 +64,45 @@ class SessionWindow(QMainWindow):
         pass
 
     def print_file(self):
-        pass
+        if not self.session_manager:
+            return
+
+        # 1. Select a PDF file from the session directory
+        # Start looking in the session path
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, 
+            "Select Encrypted File", 
+            self.session_manager.session_path, 
+            "All Files (*.*)"
+        )
+        
+        if not file_path:
+            return
+
+        # 2. Decrypt it to a temp directory
+        temp_file = create_temp_file(self.session_manager.session_path, "print_mem_file.pdf")
+        if not temp_file:
+            QMessageBox.warning(self, "Error", "Failed to create temporary file.")
+            return
+
+        decrypt_file(file_path, temp_file, self.key)
+
+        # 3. Send the decrypted file to print_pdf()
+        print_pdf(temp_file)
+
+        # 4. Wait for the user to finish printing
+        QMessageBox.information(
+            self, 
+            "Printing in Progress", 
+            "Please wait for the printing dialog to appear.\n\nOnce printing is complete, click OK to securely delete the file."
+        )
+
+        # 5. Securely delete the original encrypted file
+        secure_delete_file(file_path)
+
+        # 6. Clean up temp files
+        # temp_file is inside the _temp directory, so we clean up the parent of the file
+        cleanup_temp_dir(os.path.dirname(temp_file))
 
     def end_session(self):
         if self.session_manager:
