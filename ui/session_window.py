@@ -1,7 +1,7 @@
 import sys
 import os
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QPushButton, QDesktopWidget, QFileDialog, QMessageBox
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt, QTimer, QTime
 from core.encryption import encrypt_file, decrypt_file, generate_key
 from core.print_manager import print_pdf
 from core.temp_manager import create_temp_file, cleanup_temp_dir
@@ -33,7 +33,7 @@ class SessionWindow(QMainWindow):
         font_status.setBold(True)
         self.label_status.setFont(font_status)
 
-        self.label_timer = QLabel("Time Left: --:--")
+        self.label_timer = QLabel("Time Left: 15:00")
         self.label_timer.setAlignment(Qt.AlignCenter)
 
         # Buttons
@@ -54,11 +54,29 @@ class SessionWindow(QMainWindow):
         layout.addWidget(self.btn_print)
         layout.addWidget(self.btn_end)
 
+        # Session Timer (15 minutes = 900 seconds)
+        self.time_left = 900 
+        self.timer = QTimer(self)
+        self.timer.timeout.connect(self.update_timer)
+        self.timer.start(1000) # Update every second
+
     def center(self):
         qr = self.frameGeometry()
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
         self.move(qr.topLeft())
+
+    def update_timer(self):
+        self.time_left -= 1
+        
+        # Format time as MM:SS
+        minutes = self.time_left // 60
+        seconds = self.time_left % 60
+        self.label_timer.setText(f"Time Left: {minutes:02d}:{seconds:02d}")
+
+        if self.time_left <= 0:
+            self.timer.stop()
+            self.end_session()
 
     def add_file(self):
         pass
@@ -105,6 +123,10 @@ class SessionWindow(QMainWindow):
         cleanup_temp_dir(os.path.dirname(temp_file))
 
     def end_session(self):
+        # Stop timer if it's running
+        if hasattr(self, 'timer') and self.timer.isActive():
+            self.timer.stop()
+            
         if self.session_manager:
             self.session_manager.end_session()
         self.close()
