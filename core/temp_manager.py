@@ -8,10 +8,6 @@ def create_temp_file(session_path, filename):
             os.makedirs(temp_dir)
         
         file_path = os.path.join(temp_dir, filename)
-        # Create an empty file to ensure it exists
-        with open(file_path, 'w'):
-            pass
-            
         return file_path
     except OSError:
         return None
