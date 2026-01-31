@@ -10,10 +10,20 @@ if project_root not in sys.path:
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget, QVBoxLayout, QDesktopWidget
 from core.session_manager import SessionManager
 from ui.session_window import SessionWindow
+from core.secure_delete import secure_delete_directory
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
+        
+        # Startup cleanup: securely delete any existing session folders
+        sessions_path = os.path.join(project_root, "data", "secure_sessions")
+        if os.path.exists(sessions_path):
+            for item in os.listdir(sessions_path):
+                path = os.path.join(sessions_path, item)
+                if os.path.isdir(path):
+                    secure_delete_directory(path)
+
         self.setWindowTitle("SecurePrint – DataVault")
         self.resize(400, 200)
         self.center()
@@ -48,7 +58,6 @@ class MainWindow(QMainWindow):
             self.session_window = SessionWindow(manager)
             self.session_window.show()
             self.close()
-
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
