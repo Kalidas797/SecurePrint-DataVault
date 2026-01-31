@@ -119,13 +119,12 @@ class SessionWindow(QMainWindow):
         if not self.session_manager:
             return
 
-        # 1. Select a PDF file from the session directory
-        # Start looking in the session path
+        # 1. Select a PDF file from the session directory that is encrypted
         file_path, _ = QFileDialog.getOpenFileName(
             self, 
-            "Select Encrypted File", 
+            "Select Encrypted File to Print", 
             self.session_manager.session_path, 
-            "All Files (*.*)"
+            "Encrypted Files (*.enc);;All Files (*.*)"
         )
         
         if not file_path:
@@ -137,16 +136,22 @@ class SessionWindow(QMainWindow):
             QMessageBox.warning(self, "Error", "Failed to create temporary file.")
             return
 
-        decrypt_file(file_path, temp_file, self.key)
+        # Attempt to decrypt
+        try:
+            decrypt_file(file_path, temp_file, self.key)
+        except Exception:
+            QMessageBox.critical(self, "Error", "Failed to decrypt file.")
+            return
 
         # 3. Send the decrypted file to print_pdf()
         print_pdf(temp_file)
 
         # 4. Wait for the user to finish printing
+        # This blocks logic until user clicks "OK" which assumes printing is done/queued
         QMessageBox.information(
             self, 
             "Printing in Progress", 
-            "Please wait for the printing dialog to appear.\n\nOnce printing is complete, click OK to securely delete the file."
+            "Please wait for the printing dialog to appear.\n\nOnce printing is complete, click OK to securely delete the file from the vault."
         )
 
         # 5. Securely delete the original encrypted file
