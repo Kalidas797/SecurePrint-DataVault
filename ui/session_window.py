@@ -1,5 +1,6 @@
 import sys
 import os
+import shutil
 from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLabel, QPushButton, QDesktopWidget, QFileDialog, QMessageBox
 from PyQt5.QtCore import Qt, QTimer, QTime
 from core.encryption import encrypt_file, decrypt_file, generate_key
@@ -79,7 +80,40 @@ class SessionWindow(QMainWindow):
             self.end_session()
 
     def add_file(self):
-        pass
+        if not self.session_manager:
+            return
+
+        # 1. Open QFileDialog to select a PDF file
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, 
+            "Select File to Add", 
+            "", 
+            "PDF Files (*.pdf);;All Files (*.*)"
+        )
+        
+        if not file_path:
+            return
+
+        try:
+            filename = os.path.basename(file_path)
+            session_file_path = os.path.join(self.session_manager.session_path, filename)
+            
+            # The final stored file will have .enc extension to distinguish it
+            encrypted_file_path = session_file_path + ".enc"
+
+            # 2. Copy the selected file into the current session directory
+            shutil.copy2(file_path, session_file_path)
+
+            # 3. Immediately encrypt the copied file
+            encrypt_file(session_file_path, encrypted_file_path, self.key)
+
+            # 4. Delete the unencrypted copied file after encryption
+            secure_delete_file(session_file_path)
+            
+            QMessageBox.information(self, "Success", "File added and encrypted successfully.")
+            
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to add file: {str(e)}")
 
     def print_file(self):
         if not self.session_manager:
