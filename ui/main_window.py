@@ -18,8 +18,7 @@ class MainWindow(QMainWindow):
         
         # Button
         self.start_button = QPushButton("START CUSTOMER SESSION")
-        # Make the button large explicitly
-        self.start_button.setMinimumHeight(60)
+        self.start_button.setMinimumHeight(60)  # Make it large
         
         # Connect signal
         self.start_button.clicked.connect(self.start_session)
