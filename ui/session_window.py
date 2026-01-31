@@ -3,8 +3,9 @@ from PyQt5.QtWidgets import QApplication, QMainWindow, QWidget, QVBoxLayout, QLa
 from PyQt5.QtCore import Qt
 
 class SessionWindow(QMainWindow):
-    def __init__(self):
+    def __init__(self, session_manager=None):
         super().__init__()
+        self.session_manager = session_manager
         self.setWindowTitle("SecurePrint – Active Session")
         self.resize(500, 300)
         self.center()
@@ -58,7 +59,9 @@ class SessionWindow(QMainWindow):
         pass
 
     def end_session(self):
-        pass
+        if self.session_manager:
+            self.session_manager.end_session()
+        self.close()
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)

@@ -1,5 +1,15 @@
 import sys
+import os
+
+# Ensure the project root is in sys.path for imports to work correctly
+current_dir = os.path.dirname(os.path.abspath(__file__))
+project_root = os.path.dirname(current_dir)
+if project_root not in sys.path:
+    sys.path.insert(0, project_root)
+
 from PyQt5.QtWidgets import QApplication, QMainWindow, QPushButton, QWidget, QVBoxLayout, QDesktopWidget
+from core.session_manager import SessionManager
+from ui.session_window import SessionWindow
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -33,7 +43,12 @@ class MainWindow(QMainWindow):
         self.move(qr.topLeft())
 
     def start_session(self):
-        pass
+        manager = SessionManager()
+        if manager.start_session():
+            self.session_window = SessionWindow(manager)
+            self.session_window.show()
+            self.close()
+
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
